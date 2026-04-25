@@ -1,0 +1,44 @@
+import sys
+import time
+import requests
+from pathlib import Path
+import subprocess
+
+
+def main():
+    if len(sys.argv) < 3:
+        return
+
+    app_path = Path(sys.argv[1])
+    download_url = sys.argv[2]
+
+    new_file = app_path.with_suffix(".new.exe")
+
+    time.sleep(2)
+
+    # 下载新版本
+    r = requests.get(download_url, timeout=60)
+    r.raise_for_status()
+
+    with open(new_file, "wb") as f:
+        f.write(r.content)
+
+    old_file = app_path.with_suffix(".old.exe")
+
+    try:
+        if old_file.exists():
+            old_file.unlink()
+
+        app_path.rename(old_file)
+        new_file.rename(app_path)
+
+    except Exception as e:
+        print("替换失败:", e)
+        return
+
+    # 启动新程序
+    subprocess.Popen([str(app_path)])
+
+
+if __name__ == "__main__":
+    main()
